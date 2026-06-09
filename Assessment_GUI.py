@@ -46,7 +46,7 @@ st.markdown("""
     /* 强制所有下拉菜单（Selectbox）的未展开状态及文字使用新罗马字体 */
     div[data-baseweb="select"] div { 
         font-family: 'Times New Roman', serif !important; 
-        font-size: 14px !important; 
+        font-size: 16px !important; 
     }
     
     /* 强制下拉菜单展开后的候选项列表使用新罗马字体 */
