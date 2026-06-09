@@ -41,6 +41,7 @@ st.markdown("""
     div[data-baseweb="input"] input { 
         text-align: center !important; 
         font-family: 'Times New Roman', serif !important; 
+        font-size: 16px !important; 
     }  
     
     /* 强制所有下拉菜单（Selectbox）的未展开状态及文字使用新罗马字体 */
@@ -52,6 +53,7 @@ st.markdown("""
     /* 强制下拉菜单展开后的候选项列表使用新罗马字体 */
     ul[data-baseweb="menu"] li, [role="listbox"] li { 
         font-family: 'Times New Roman', serif !important; 
+        font-size: 16px !important; 
     }
     
     .section-header { color: #800020; font-size: 20px; font-weight: bold; margin-bottom: 5px; font-family: 'Times New Roman', serif;}
