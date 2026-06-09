@@ -2,13 +2,15 @@
 """
 app_v8.py
 Time-varying probability assessment GUI
-基于 LHS 与蒙特卡洛模拟的滨海高桩承台桥墩时变概率评估 (纯 NumPy + 极致紧凑排版 + 图例层级优化 + 多交点检测)
+基于 LHS 与蒙特卡洛模拟的滨海高桩承台桥墩时变概率评估
+(纯 NumPy + 极致紧凑排版 + 完美跨平台学术风兼容 + 300DPI高清图表 + 多交点全面检测)
 """
 
 import streamlit as st
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as font_manager
 import io
 import os
 import joblib
@@ -17,24 +19,40 @@ from scipy.stats import qmc
 import warnings
 warnings.filterwarnings("ignore")
 
-# ================== 1. 网页全局配置与美化 ==================
+# ================== 1. 网页全局配置与超级 CSS 美化 ==================
 st.set_page_config(
     page_title="Lifecycle probabilistic seismic failure mode assessment of coastal bridge bents",
     layout="wide", 
     initial_sidebar_state="collapsed"
 )
 
+# 终极前端样式注入：强行全面接管云端浏览器的字体样式
 st.markdown("""
     <style>
+    /* 全局强制所有基础文本、标签、按钮使用新罗马字体 */
+    html, body, [data-testid="stAppViewContainer"], .stText, .stMarkdown, p, span, label, button {
+        font-family: 'Times New Roman', serif !important;
+    }
+    
     .block-container { padding-top: 1.0rem; padding-bottom: 1.0rem; max-width: 98% !important; }
     hr { margin-top: 5px; margin-bottom: 10px; border-top: 1px solid #ddd; }
     
-    /* 强制数字输入框居中且使用新罗马字体 */
-    div[data-baseweb="input"] input { text-align: center !important; font-family: 'Times New Roman', serif !important; }  
+    /* 强制所有数字输入框（Number Input）文本居中且使用新罗马字体 */
+    div[data-baseweb="input"] input { 
+        text-align: center !important; 
+        font-family: 'Times New Roman', serif !important; 
+    }  
     
-    /* 强制下拉菜单 (Selectbox) 使用新罗马字体 */
-    div[data-baseweb="select"] div { font-family: 'Times New Roman', serif !important; font-size: 14px !important; }
-    ul[data-baseweb="menu"] li { font-family: 'Times New Roman', serif !important; }
+    /* 强制所有下拉菜单（Selectbox）的未展开状态及文字使用新罗马字体 */
+    div[data-baseweb="select"] div { 
+        font-family: 'Times New Roman', serif !important; 
+        font-size: 14px !important; 
+    }
+    
+    /* 强制下拉菜单展开后的候选项列表使用新罗马字体 */
+    ul[data-baseweb="menu"] li, [role="listbox"] li { 
+        font-family: 'Times New Roman', serif !important; 
+    }
     
     .section-header { color: #800020; font-size: 20px; font-weight: bold; margin-bottom: 5px; font-family: 'Times New Roman', serif;}
     .col-header { text-align: center; color: #333; font-size: 16px; font-weight: bold; font-family: 'Times New Roman', serif; }
@@ -42,9 +60,15 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ====== 全局可视化美化设置 (学术风 - 新罗马字体) ======
-plt.rcParams['font.family'] = 'serif'
-plt.rcParams['font.serif'] = ['Times New Roman']
+# ====== 全局可视化美化设置 (动态加载本地 times.ttf 解决 Linux 环境缺失问题) ======
+font_path = 'times.ttf'  # 请确保该字体文件已上传到 GitHub 仓库并与本脚本处于同级目录
+if os.path.exists(font_path):
+    font_manager.fontManager.addfont(font_path)
+    plt.rcParams['font.family'] = 'Times New Roman'
+else:
+    plt.rcParams['font.family'] = 'serif'
+    plt.rcParams['font.serif'] = ['Times New Roman']
+
 plt.rcParams['mathtext.fontset'] = 'stix'
 plt.rcParams['axes.grid'] = False
 plt.rcParams['grid.alpha'] = 0.4
@@ -202,7 +226,7 @@ with col_left:
     
     st.markdown("<div class='section-header'>2. Corrosion related parameters</div>", unsafe_allow_html=True)
     
-    # 新增：横向双列排布渲染公式
+    # 公式横向双列排布渲染
     st.markdown("<div style='margin-top: 15px; margin-bottom: 5px;'>", unsafe_allow_html=True)
     col_f1, col_f2 = st.columns([1.5, 1])
     with col_f1:
@@ -392,7 +416,7 @@ with col_right:
                     for idx, name in enumerate(label_names):
                         annual_probs[name][year] = np.sum(predictions == idx) / N_SAMPLES
 
-                # ================== 5. 图表渲染 ==================
+                # ================== 5. 图表渲染 (全面引入 DPI=300 高清机制) ==================
                 
                 # 色彩配置
                 color_hist_s = '#CBE5F5'  
@@ -404,7 +428,7 @@ with col_right:
                 # ---------------- 图 1: Distribution of corrosion initiation time ----------------
                 with plot_placeholders[0].container():
                     st.markdown("<div class='plot-container'><div style='text-align: center; font-family: \"Times New Roman\", serif; font-weight: bold; font-size: 17px; margin-bottom: 2px;'>Distribution of corrosion initiation time</div>", unsafe_allow_html=True)
-                    fig1, ax1 = plt.subplots(figsize=(6, 3.5), dpi=300)
+                    fig1, ax1 = plt.subplots(figsize=(6, 3.5), dpi=300) # 修复：加入 DPI 提高饱和度与清晰度
                     t_long_valid = T_init_long[T_init_long <= 100]
                     t_stir_valid = T_init_stir[T_init_stir <= 100]
                     
@@ -439,7 +463,7 @@ with col_right:
                 # ---------------- 图 2: Time-dependent corrosion rate ----------------
                 with plot_placeholders[1].container():
                     st.markdown("<div class='plot-container'><div style='text-align: center; font-family: \"Times New Roman\", serif; font-weight: bold; font-size: 17px; margin-bottom: 2px;'>Time-dependent corrosion level</div>", unsafe_allow_html=True)
-                    fig2, ax2 = plt.subplots(figsize=(6, 3.5), dpi=300)
+                    fig2, ax2 = plt.subplots(figsize=(6, 3.5), dpi=300) # 修复：加入 DPI 提高饱和度与清晰度
                     med_l, p16_l, p84_l = np.median(corr_long, axis=0), np.percentile(corr_long, 16, axis=0), np.percentile(corr_long, 84, axis=0)
                     med_s, p16_s, p84_s = np.median(corr_stir, axis=0), np.percentile(corr_stir, 16, axis=0), np.percentile(corr_stir, 84, axis=0)
                     
@@ -467,7 +491,7 @@ with col_right:
                 # ---------------- 图 3: Scour depth evolution ----------------
                 with plot_placeholders[2].container():
                     st.markdown("<div class='plot-container'><div style='text-align: center; font-family: \"Times New Roman\", serif; font-weight: bold; font-size: 17px; margin-bottom: 2px;'>Time-dependent scour depth</div>", unsafe_allow_html=True)
-                    fig3, ax3 = plt.subplots(figsize=(6, 3.5), dpi=300)
+                    fig3, ax3 = plt.subplots(figsize=(6, 3.5), dpi=300) # 修复：加入 DPI 提高饱和度与清晰度
                     med_sd = np.median(scour_depths, axis=0)
                     p16_sd = np.percentile(scour_depths, 16, axis=0)
                     p84_sd = np.percentile(scour_depths, 84, axis=0)
@@ -493,7 +517,7 @@ with col_right:
                 # ---------------- 图 4: Time-dependent Failure Mode Probabilities ----------------
                 with plot_placeholders[3].container():
                     st.markdown("<div class='plot-container'><div style='text-align: center; font-family: \"Times New Roman\", serif; font-weight: bold; font-size: 17px; margin-bottom: 2px;'>Time-dependent failure mode probabilities</div>", unsafe_allow_html=True)
-                    fig4, ax4 = plt.subplots(figsize=(6, 3.5), dpi=300)
+                    fig4, ax4 = plt.subplots(figsize=(6, 3.5), dpi=300) # 修复：加入 DPI 提高饱和度与清晰度
                     
                     color_map_prob = {'FFF': color_scour, 'PFF': color_line_s, 'PSF': color_line_l}
                     for name in label_names:
@@ -516,13 +540,11 @@ with col_right:
 
                 # ---------------- 多交点全面计算输出 ----------------
                 crossovers_found = []
-                # 遍历两两曲线的所有组合
                 pairs_to_check = [('FFF', 'PFF'), ('FFF', 'PSF'), ('PFF', 'PSF')]
                 for label_a, label_b in pairs_to_check:
                     if label_a in label_names and label_b in label_names:
                         cross_list = find_all_crossovers(years_arr, annual_probs[label_a], annual_probs[label_b], label_a, label_b)
                         for t, desc in cross_list:
-                            # 保存时间和描述，方便后续按时间轴排序
                             crossovers_found.append({"time": float(t), "text": f"{t} ({desc})"})
 
                 # 按照发生的时间顺序排列交点
