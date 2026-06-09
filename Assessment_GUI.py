@@ -223,12 +223,12 @@ with col_left:
         ("fyt", "f<sub>yt</sub> (MPa)", "Transverse reinforcement yield strength", "250~450", 250.0, 450.0, 300.0, "Lognormal", 0.106, 10.0, "%.0f", struct_opts),
         ("d_t", "d<sub>s</sub> (m)", "Transverse reinforcement diameter", "0.01~0.02", 0.01, 0.02, 0.016, "Normal", 0.10, 0.001, "%.3f", struct_opts)
     ]
-    user_struct = render_param_section("1. Structural related parameters", part1_config, use_std=False)
+    user_struct = render_param_section("1. Structure/Soil-related parameters", part1_config, use_std=False)
 
     # ---------------- 2. 锈蚀参数 ----------------
     corr_opts = ["Normal", "Lognormal", "Beta", "Gumbel", "Uniform", "Deterministic"]
     
-    st.markdown("<div class='section-header'>2. Corrosion related parameters</div>", unsafe_allow_html=True)
+    st.markdown("<div class='section-header'>2. Corrosion-related parameters</div>", unsafe_allow_html=True)
     
     st.markdown("<div style='margin-top: 15px; margin-bottom: 5px;'>", unsafe_allow_html=True)
     col_f1, col_f2 = st.columns([1.5, 1])
@@ -269,14 +269,14 @@ with col_left:
     # ---------------- 3. 冲刷参数 ----------------
     scour_opts = ["Normal", "Lognormal", "Uniform", "Deterministic"]
     part3_config = [
-        ("SD_val", "SD (m)", "SD<sub>mean</sub> / B = p[1 - exp(-qt)] + r[1 - exp(-st)]", "0~8", 0.0, 8.0, 4.0, "Normal", 0.27, 0.5, "%.3f", scour_opts),
+        ("SD_val", "SD (m)", "SD<sub>mean</sub> / B = p[1 - exp(-qt)] + r[1 - exp(-st)]", "0~8", 0.0, 8.0, None, "Normal", 0.27, 0.5, "%.3f", scour_opts),
         ("B_val", "B (m)", "Base width of the pile foundation", "-", None, None, 2.260, "Normal", 0.226, 0.1, "%.3f", scour_opts),
         ("p_val", "p", "Empirical scour parameter p", "-", None, None, 1.093, "Deterministic", 0.0, 0.1, "%.3f", scour_opts),
         ("q_val", "q", "Empirical scour parameter q", "-", None, None, 0.021, "Deterministic", 0.0, 0.01, "%.3f", scour_opts),
         ("r_val", "r", "Empirical scour parameter r", "-", None, None, 0.269, "Deterministic", 0.0, 0.1, "%.3f", scour_opts),
         ("s_val", "s", "Empirical scour parameter s", "-", None, None, 2.135, "Deterministic", 0.0, 0.1, "%.3f", scour_opts)
     ]
-    user_scour = render_param_section("3. Scour related parameters", part3_config, use_std=True)
+    user_scour = render_param_section("3. Scour-related parameters", part3_config, use_std=True)
 
 # ----------------- 右侧：控制与图表区 -----------------
 with col_right:
@@ -385,12 +385,51 @@ with col_right:
                 B_arr = samples_dict['B_val']
                 p_arr, q_arr, r_arr, s_arr = samples_dict['p_val'], samples_dict['q_val'], samples_dict['r_val'], samples_dict['s_val']
                 
+                # ================== 冲刷深度动态均值与分布抽样修复 ==================
+                sd_idx = [p['id'] for p in all_inputs].index('SD_val')
+                U_SD = U[:, sd_idx]  # 复用为 SD 生成的 LHS 均匀抽样矩阵
+                
+                sd_input = next(p for p in all_inputs if p['id'] == 'SD_val')
+                sd_std_val = sd_input['std']  # 获取界面传入的 Standard Deviation (例如 0.27)
+                sd_min = 0.0 if sd_input['min'] is None else sd_input['min']
+                sd_max = 8.0 if sd_input['max'] is None else sd_input['max']
+                sd_dist_type = sd_input['dist']
+                
                 scour_depths = np.zeros((N_SAMPLES, N_YEARS))
+                
                 for y_idx, yr in enumerate(years_arr):
+                    # 1. 计算时变公式均值
                     term1 = p_arr * (1 - np.exp(-q_arr * yr))
                     term2 = r_arr * (1 - np.exp(-s_arr * yr))
-                    sd_yr = B_arr * (term1 + term2)
-                    scour_depths[:, y_idx] = np.clip(sd_yr, 0.0, 8.0)
+                    sd_mean = B_arr * (term1 + term2)
+                    
+                    # 2. 将计算结果作为均值进行正态/其他分布的重抽样
+                    if sd_dist_type == "Deterministic" or sd_std_val == 0:
+                        sd_samples = sd_mean
+                    elif sd_dist_type == "Normal":
+                        safe_std = np.maximum(sd_std_val, 1e-6)
+                        a = (sd_min - sd_mean) / safe_std
+                        b = (sd_max - sd_mean) / safe_std
+                        sd_samples = stats.truncnorm.ppf(U_SD, a, b, loc=sd_mean, scale=safe_std)
+                    elif sd_dist_type == "Lognormal":
+                        safe_std = np.maximum(sd_std_val, 1e-6)
+                        safe_mean = np.where(sd_mean > 1e-6, sd_mean, 1e-6)
+                        sigma2 = np.log(1 + (safe_std/safe_mean)**2)
+                        mu = np.log(safe_mean) - sigma2 / 2
+                        sd_samples = stats.lognorm.ppf(U_SD, s=np.sqrt(sigma2), scale=np.exp(mu))
+                        sd_samples = np.clip(sd_samples, sd_min, sd_max)
+                    elif sd_dist_type == "Uniform":
+                        safe_std = np.maximum(sd_std_val, 1e-6)
+                        lower = np.maximum(sd_mean - np.sqrt(3) * safe_std, sd_min)
+                        upper = np.minimum(sd_mean + np.sqrt(3) * safe_std, sd_max)
+                        invalid = lower >= upper
+                        lower[invalid] = sd_mean[invalid]
+                        upper[invalid] = sd_mean[invalid] + 1e-6
+                        sd_samples = stats.uniform.ppf(U_SD, loc=lower, scale=upper-lower)
+                    else:
+                        sd_samples = sd_mean
+                        
+                    scour_depths[:, y_idx] = np.clip(sd_samples, sd_min, sd_max)
 
                 X_fixed = np.zeros((N_SAMPLES, 20)) 
                 mapping = [
@@ -557,7 +596,7 @@ with col_right:
                     list_items = "".join([f"<li style='margin-bottom: 2px;'>{item['text']}</li>" for item in crossovers_found])
                     crossover_html = f"""
                     <div style='font-family: "Times New Roman", serif; font-size: 15px; color: #444; margin: 0px 0px 10px 20px;'>
-                        <b>Time to transition of failure modes (years):</b>
+                        <b>Time to transfer of seismic failure mode (years):</b>
                         <ul style='margin-top: 5px; padding-left: 20px;'>
                             {list_items}
                         </ul>
@@ -566,7 +605,7 @@ with col_right:
                 else:
                     crossover_html = """
                     <div style='font-family: "Times New Roman", serif; font-size: 15px; color: #444; margin: 0px 0px 10px 20px;'>
-                        <b>Time to transition of failure modes (years):</b> None
+                        <b>Time to transfer of seismic failure mode (years):</b> None
                     </div>
                     """
                 
