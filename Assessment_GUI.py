@@ -2,14 +2,13 @@
 """
 app_v8.py
 Time-varying probability assessment GUI
-基于 LHS 与蒙特卡洛模拟的滨海高桩承台桥墩时变概率评估 (纯 NumPy + 极致紧凑排版 + 图例层级优化 + 多交点检测 + 云端新罗马字体修复)
+基于 LHS 与蒙特卡洛模拟的滨海高桩承台桥墩时变概率评估 (纯 NumPy + 极致紧凑排版 + 图例层级优化 + 多交点检测)
 """
 
 import streamlit as st
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.font_manager as font_manager  # 新增：导入字体管理器
 import io
 import os
 import joblib
@@ -36,15 +35,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ====== 全局可视化美化设置 (方案一：云端环境动态加载新罗马字体) ======
-font_path = 'times.ttf'  # 确保该文件已上传至 GitHub 仓库并与本脚本同级
-if os.path.exists(font_path):
-    font_manager.fontManager.addfont(font_path)
-    plt.rcParams['font.family'] = 'Times New Roman'  # 成功加载文件后，强制全局指定
-else:
-    plt.rcParams['font.family'] = 'serif'
-    plt.rcParams['font.serif'] = ['Times New Roman']  # 兜底本地环境
-
+# ====== 全局可视化美化设置 (学术风 - 新罗马字体) ======
+plt.rcParams['font.family'] = 'serif'
+plt.rcParams['font.serif'] = ['Times New Roman']
 plt.rcParams['mathtext.fontset'] = 'stix'
 plt.rcParams['axes.grid'] = False
 plt.rcParams['grid.alpha'] = 0.4
@@ -202,7 +195,7 @@ with col_left:
     
     st.markdown("<div class='section-header'>2. Corrosion related parameters</div>", unsafe_allow_html=True)
     
-    # 公式横向双列排布
+    # 新增：横向双列排布渲染公式
     st.markdown("<div style='margin-top: 15px; margin-bottom: 5px;'>", unsafe_allow_html=True)
     col_f1, col_f2 = st.columns([1.5, 1])
     with col_f1:
@@ -516,11 +509,13 @@ with col_right:
 
                 # ---------------- 多交点全面计算输出 ----------------
                 crossovers_found = []
+                # 遍历两两曲线的所有组合
                 pairs_to_check = [('FFF', 'PFF'), ('FFF', 'PSF'), ('PFF', 'PSF')]
                 for label_a, label_b in pairs_to_check:
                     if label_a in label_names and label_b in label_names:
                         cross_list = find_all_crossovers(years_arr, annual_probs[label_a], annual_probs[label_b], label_a, label_b)
                         for t, desc in cross_list:
+                            # 保存时间和描述，方便后续按时间轴排序
                             crossovers_found.append({"time": float(t), "text": f"{t} ({desc})"})
 
                 # 按照发生的时间顺序排列交点
