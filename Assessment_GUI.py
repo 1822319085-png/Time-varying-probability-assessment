@@ -26,7 +26,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 终极前端样式注入：强行全面接管云端浏览器的字体样式
+# 终极前端样式注入：强行全面接管云端浏览器的网页文本字体样式
 st.markdown("""
     <style>
     /* 全局强制所有基础文本、标签、按钮使用新罗马字体 */
@@ -37,14 +37,14 @@ st.markdown("""
     .block-container { padding-top: 1.0rem; padding-bottom: 1.0rem; max-width: 98% !important; }
     hr { margin-top: 5px; margin-bottom: 10px; border-top: 1px solid #ddd; }
     
-    /* 强制所有数字输入框（Number Input）文本居中且使用新罗马字体 */
+    /* 强制所有数字输入框（Number Input）文本居中、大小一致且使用新罗马字体 */
     div[data-baseweb="input"] input { 
         text-align: center !important; 
         font-family: 'Times New Roman', serif !important; 
-        font-size: 16px !important; 
+        font-size: 16px !important;
     }  
     
-    /* 强制所有下拉菜单（Selectbox）的未展开状态及文字使用新罗马字体 */
+    /* 强制所有下拉菜单（Selectbox）的显示框文字使用新罗马字体 */
     div[data-baseweb="select"] div { 
         font-family: 'Times New Roman', serif !important; 
         font-size: 16px !important; 
@@ -53,7 +53,7 @@ st.markdown("""
     /* 强制下拉菜单展开后的候选项列表使用新罗马字体 */
     ul[data-baseweb="menu"] li, [role="listbox"] li { 
         font-family: 'Times New Roman', serif !important; 
-        font-size: 16px !important; 
+        font-size: 16px !important;
     }
     
     .section-header { color: #800020; font-size: 20px; font-weight: bold; margin-bottom: 5px; font-family: 'Times New Roman', serif;}
@@ -62,12 +62,15 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ====== 全局可视化美化设置 (动态加载本地 times.ttf 解决 Linux 环境缺失问题) ======
+# ====== 全局可视化美化设置 (动态加载本地 times.ttf 并动态提取注册全称，防止 Linux 检索穿透) ======
 font_path = 'times.ttf'  # 请确保该字体文件已上传到 GitHub 仓库并与本脚本处于同级目录
 if os.path.exists(font_path):
     font_manager.fontManager.addfont(font_path)
-    plt.rcParams['font.family'] = 'Times New Roman'
+    prop = font_manager.FontProperties(fname=font_path)
+    GLOBAL_FONT_NAME = prop.get_name()  # 动态提取字体的真实内部注册名称（如 'Times New Roman'）
+    plt.rcParams['font.family'] = GLOBAL_FONT_NAME
 else:
+    GLOBAL_FONT_NAME = 'serif'
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams['font.serif'] = ['Times New Roman']
 
@@ -146,7 +149,6 @@ def find_all_crossovers(years, prob_a, prob_b, label_a, label_b):
                 elif diff[i-1] < 0 and slope_a > slope_b:
                     crossovers.append((round(years[i], 2), f"{label_b} to {label_a}"))
         elif diff[i] * diff[i+1] < 0:
-            # 线性插值寻找精确交点
             t = years[i] - diff[i] * (years[i+1] - years[i]) / (diff[i+1] - diff[i])
             slope_a = prob_a[i+1] - prob_a[i]
             slope_b = prob_b[i+1] - prob_b[i]
@@ -157,10 +159,10 @@ def find_all_crossovers(years, prob_a, prob_b, label_a, label_b):
     return crossovers
 
 def apply_academic_style(ax_obj):
+    # 强制刻度文字采用加载进来的全局新罗马字体注册名
     for label in (ax_obj.get_xticklabels() + ax_obj.get_yticklabels()):
-        label.set_fontname('Times New Roman')
-        label.set_fontsize(14)
-    # 刻度线内收，开启右侧与顶部刻度
+        label.set_fontname(GLOBAL_FONT_NAME)
+        label.set_fontsize(12)
     ax_obj.tick_params(axis='both', direction='in', top=True, right=True, labelsize=12, width=1.0, length=4.0)
 
 # ================== 4. 核心界面布局 ==================
@@ -180,7 +182,7 @@ with col_left:
         for p_id, html_name, desc, rng_str, p_min, p_max, p_mean, p_dist, p_disp, p_step, p_fmt, dist_opts in params_config:
             c1, c2, c3, c4, c5, c6 = st.columns([1.2, 2.8, 1.6, 1.1, 1.1, 1.2])
             c1.markdown(f"<div style='text-align: center; font-weight: bold; padding-top: 8px; font-family: \"Times New Roman\", serif;'>{html_name}</div>", unsafe_allow_html=True)
-            c2.markdown(f"<div style='text-align: center; color: #444; font-size: 15px; padding-top: 8px; font-family: \"Times New Roman\", serif;'>{desc}</div>", unsafe_allow_html=True)
+            c2.markdown(f"<div style='text-align: center; color: #444; font-size: 14px; padding-top: 8px; font-family: \"Times New Roman\", serif;'>{desc}</div>", unsafe_allow_html=True)
             
             with c3:
                 dist_val = st.selectbox(label=f"{p_id}_dist", options=dist_opts, index=dist_opts.index(p_dist), label_visibility="collapsed")
@@ -228,7 +230,6 @@ with col_left:
     
     st.markdown("<div class='section-header'>2. Corrosion related parameters</div>", unsafe_allow_html=True)
     
-    # 公式横向双列排布渲染
     st.markdown("<div style='margin-top: 15px; margin-bottom: 5px;'>", unsafe_allow_html=True)
     col_f1, col_f2 = st.columns([1.5, 1])
     with col_f1:
@@ -418,9 +419,8 @@ with col_right:
                     for idx, name in enumerate(label_names):
                         annual_probs[name][year] = np.sum(predictions == idx) / N_SAMPLES
 
-                # ================== 5. 图表渲染 (全面引入 DPI=300 高清机制) ==================
+                # ================== 5. 图表渲染 (彻底去除硬编码参数，利用全局继承) ==================
                 
-                # 色彩配置
                 color_hist_s = '#CBE5F5'  
                 color_line_s = '#0000FF'  
                 color_hist_l = '#FADBDC'  
@@ -430,7 +430,7 @@ with col_right:
                 # ---------------- 图 1: Distribution of corrosion initiation time ----------------
                 with plot_placeholders[0].container():
                     st.markdown("<div class='plot-container'><div style='text-align: center; font-family: \"Times New Roman\", serif; font-weight: bold; font-size: 17px; margin-bottom: 2px;'>Distribution of corrosion initiation time</div>", unsafe_allow_html=True)
-                    fig1, ax1 = plt.subplots(figsize=(6, 3.5), dpi=300) # 修复：加入 DPI 提高饱和度与清晰度
+                    fig1, ax1 = plt.subplots(figsize=(6, 3.5), dpi=300)
                     t_long_valid = T_init_long[T_init_long <= 100]
                     t_stir_valid = T_init_stir[T_init_stir <= 100]
                     
@@ -447,8 +447,9 @@ with col_right:
                         x = np.linspace(0, 100, 1000)
                         ax1.plot(x, stats.lognorm.pdf(x, s, loc=0, scale=sc), color=color_line_l, lw=2.5, label='Longitudinal lognormal distribution')
 
-                    ax1.set_xlabel('Initial corrosion time (years)', fontfamily='serif', name='Times New Roman', fontsize=14)
-                    ax1.set_ylabel('Probability density', fontfamily='serif', name='Times New Roman', fontsize=14)
+                    # 修复：去除 fontfamily='serif', name='Times New Roman'，使其自然完美继承全局设置
+                    ax1.set_xlabel('Initial corrosion time (years)', fontsize=14)
+                    ax1.set_ylabel('Probability density', fontsize=14)
                     ax1.set_xlim(0, 30)
                     
                     y_max1 = ax1.get_ylim()[1]
@@ -456,7 +457,7 @@ with col_right:
                     ax1.set_ylim(0, rounded_ymax1)
                     ax1.set_yticks(np.linspace(0, rounded_ymax1, 5))
                     
-                    ax1.legend(frameon=False, loc='upper right', prop={'family': 'Times New Roman', 'size': 12})
+                    ax1.legend(frameon=False, loc='upper right', prop={'family': GLOBAL_FONT_NAME, 'size': 11})
                     apply_academic_style(ax1)
                     plt.tight_layout(pad=0.3)
                     st.pyplot(fig1)
@@ -465,7 +466,7 @@ with col_right:
                 # ---------------- 图 2: Time-dependent corrosion rate ----------------
                 with plot_placeholders[1].container():
                     st.markdown("<div class='plot-container'><div style='text-align: center; font-family: \"Times New Roman\", serif; font-weight: bold; font-size: 17px; margin-bottom: 2px;'>Time-dependent corrosion level</div>", unsafe_allow_html=True)
-                    fig2, ax2 = plt.subplots(figsize=(6, 3.5), dpi=300) # 修复：加入 DPI 提高饱和度与清晰度
+                    fig2, ax2 = plt.subplots(figsize=(6, 3.5), dpi=300)
                     med_l, p16_l, p84_l = np.median(corr_long, axis=0), np.percentile(corr_long, 16, axis=0), np.percentile(corr_long, 84, axis=0)
                     med_s, p16_s, p84_s = np.median(corr_stir, axis=0), np.percentile(corr_stir, 16, axis=0), np.percentile(corr_stir, 84, axis=0)
                     
@@ -475,8 +476,9 @@ with col_right:
                     ax2.plot(years_arr, med_l, color=color_line_l, lw=2.5, label='Longitudinal (median)', zorder=3)
                     ax2.fill_between(years_arr, p16_l, p84_l, color=color_hist_l, alpha=0.6, label='Longitudinal (16%-84% quantiles)', zorder=2)
                     
-                    ax2.set_xlabel('Service time (years)', fontfamily='serif', name='Times New Roman', fontsize=14)
-                    ax2.set_ylabel('Corrosion level', fontfamily='serif', name='Times New Roman', fontsize=14)
+                    # 修复：同样去除多余的单独字体定义
+                    ax2.set_xlabel('Service time (years)', fontsize=14)
+                    ax2.set_ylabel('Corrosion level', fontsize=14)
                     ax2.set_xlim(0, 100)
                     
                     max_corr = np.max([np.max(p84_l), np.max(p84_s)])
@@ -484,7 +486,7 @@ with col_right:
                     ax2.set_ylim(0, rounded_ymax2)
                     ax2.set_yticks(np.linspace(0, rounded_ymax2, 5))
                     
-                    ax2.legend(frameon=False, loc='upper left', prop={'family': 'Times New Roman', 'size': 12})
+                    ax2.legend(frameon=False, loc='upper left', prop={'family': GLOBAL_FONT_NAME, 'size': 11})
                     apply_academic_style(ax2)
                     plt.tight_layout(pad=0.3)
                     st.pyplot(fig2)
@@ -493,7 +495,7 @@ with col_right:
                 # ---------------- 图 3: Scour depth evolution ----------------
                 with plot_placeholders[2].container():
                     st.markdown("<div class='plot-container'><div style='text-align: center; font-family: \"Times New Roman\", serif; font-weight: bold; font-size: 17px; margin-bottom: 2px;'>Time-dependent scour depth</div>", unsafe_allow_html=True)
-                    fig3, ax3 = plt.subplots(figsize=(6, 3.5), dpi=300) # 修复：加入 DPI 提高饱和度与清晰度
+                    fig3, ax3 = plt.subplots(figsize=(6, 3.5), dpi=300)
                     med_sd = np.median(scour_depths, axis=0)
                     p16_sd = np.percentile(scour_depths, 16, axis=0)
                     p84_sd = np.percentile(scour_depths, 84, axis=0)
@@ -501,8 +503,8 @@ with col_right:
                     ax3.plot(years_arr, med_sd, color=color_scour, lw=2.5, label='Scour depth (median)', zorder=3)
                     ax3.fill_between(years_arr, p16_sd, p84_sd, color='#B2DFDB', alpha=0.6, label='Scour depth (16%-84% quantiles)', zorder=2)
                     
-                    ax3.set_xlabel('Service time (years)', fontfamily='serif', name='Times New Roman', fontsize=14)
-                    ax3.set_ylabel('Scour depth (m)', fontfamily='serif', name='Times New Roman', fontsize=14)
+                    ax3.set_xlabel('Service time (years)', fontsize=14)
+                    ax3.set_ylabel('Scour depth (m)', fontsize=14)
                     ax3.set_xlim(0, 100)
                     
                     max_scour = np.max(p84_sd)
@@ -510,7 +512,7 @@ with col_right:
                     ax3.set_ylim(0, rounded_ymax3)
                     ax3.set_yticks(np.linspace(0, rounded_ymax3, 5))
                     
-                    ax3.legend(frameon=False, loc='upper left', prop={'family': 'Times New Roman', 'size': 12})
+                    ax3.legend(frameon=False, loc='upper left', prop={'family': GLOBAL_FONT_NAME, 'size': 11})
                     apply_academic_style(ax3)
                     plt.tight_layout(pad=0.3)
                     st.pyplot(fig3)
@@ -519,14 +521,14 @@ with col_right:
                 # ---------------- 图 4: Time-dependent Failure Mode Probabilities ----------------
                 with plot_placeholders[3].container():
                     st.markdown("<div class='plot-container'><div style='text-align: center; font-family: \"Times New Roman\", serif; font-weight: bold; font-size: 17px; margin-bottom: 2px;'>Time-dependent failure mode probabilities</div>", unsafe_allow_html=True)
-                    fig4, ax4 = plt.subplots(figsize=(6, 3.5), dpi=300) # 修复：加入 DPI 提高饱和度与清晰度
+                    fig4, ax4 = plt.subplots(figsize=(6, 3.5), dpi=300)
                     
                     color_map_prob = {'FFF': color_scour, 'PFF': color_line_s, 'PSF': color_line_l}
                     for name in label_names:
                         ax4.plot(years_arr, annual_probs[name], color=color_map_prob.get(name, '#333'), lw=2.5, label=name)
                     
-                    ax4.set_xlabel('Service time (years)', fontfamily='serif', name='Times New Roman', fontsize=14)
-                    ax4.set_ylabel('Probability', fontfamily='serif', name='Times New Roman', fontsize=14)
+                    ax4.set_xlabel('Service time (years)', fontsize=14)
+                    ax4.set_ylabel('Probability', fontsize=14)
                     ax4.set_xlim(0, 100)
                     
                     max_prob = np.max([np.max(annual_probs[name]) for name in label_names])
@@ -534,7 +536,7 @@ with col_right:
                     ax4.set_ylim(0, 1.0)
                     ax4.set_yticks(np.linspace(0, 1.0, 5))
                     
-                    ax4.legend(frameon=False, loc='upper right', prop={'family': 'Times New Roman', 'size': 12})
+                    ax4.legend(frameon=False, loc='upper right', prop={'family': GLOBAL_FONT_NAME, 'size': 11})
                     apply_academic_style(ax4)
                     plt.tight_layout(pad=0.3)
                     st.pyplot(fig4)
@@ -549,7 +551,6 @@ with col_right:
                         for t, desc in cross_list:
                             crossovers_found.append({"time": float(t), "text": f"{t} ({desc})"})
 
-                # 按照发生的时间顺序排列交点
                 crossovers_found = sorted(crossovers_found, key=lambda x: x["time"])
 
                 if crossovers_found:
