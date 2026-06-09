@@ -28,7 +28,14 @@ st.markdown("""
     <style>
     .block-container { padding-top: 1.0rem; padding-bottom: 1.0rem; max-width: 98% !important; }
     hr { margin-top: 5px; margin-bottom: 10px; border-top: 1px solid #ddd; }
-    div[data-baseweb="input"] input { text-align: center !important; font-family: 'Times New Roman', serif; }  
+    
+    /* 强制数字输入框居中且使用新罗马字体 */
+    div[data-baseweb="input"] input { text-align: center !important; font-family: 'Times New Roman', serif !important; }  
+    
+    /* 强制下拉菜单 (Selectbox) 使用新罗马字体 */
+    div[data-baseweb="select"] div { font-family: 'Times New Roman', serif !important; font-size: 14px !important; }
+    ul[data-baseweb="menu"] li { font-family: 'Times New Roman', serif !important; }
+    
     .section-header { color: #800020; font-size: 20px; font-weight: bold; margin-bottom: 5px; font-family: 'Times New Roman', serif;}
     .col-header { text-align: center; color: #333; font-size: 16px; font-weight: bold; font-family: 'Times New Roman', serif; }
     .plot-container { padding: 0px 0px; margin-bottom: 0px; }
@@ -397,7 +404,7 @@ with col_right:
                 # ---------------- 图 1: Distribution of corrosion initiation time ----------------
                 with plot_placeholders[0].container():
                     st.markdown("<div class='plot-container'><div style='text-align: center; font-family: \"Times New Roman\", serif; font-weight: bold; font-size: 17px; margin-bottom: 2px;'>Distribution of corrosion initiation time</div>", unsafe_allow_html=True)
-                    fig1, ax1 = plt.subplots(figsize=(6, 3.5))
+                    fig1, ax1 = plt.subplots(figsize=(6, 3.5), dpi=300)
                     t_long_valid = T_init_long[T_init_long <= 100]
                     t_stir_valid = T_init_stir[T_init_stir <= 100]
                     
@@ -432,7 +439,7 @@ with col_right:
                 # ---------------- 图 2: Time-dependent corrosion rate ----------------
                 with plot_placeholders[1].container():
                     st.markdown("<div class='plot-container'><div style='text-align: center; font-family: \"Times New Roman\", serif; font-weight: bold; font-size: 17px; margin-bottom: 2px;'>Time-dependent corrosion level</div>", unsafe_allow_html=True)
-                    fig2, ax2 = plt.subplots(figsize=(6, 3.5))
+                    fig2, ax2 = plt.subplots(figsize=(6, 3.5), dpi=300)
                     med_l, p16_l, p84_l = np.median(corr_long, axis=0), np.percentile(corr_long, 16, axis=0), np.percentile(corr_long, 84, axis=0)
                     med_s, p16_s, p84_s = np.median(corr_stir, axis=0), np.percentile(corr_stir, 16, axis=0), np.percentile(corr_stir, 84, axis=0)
                     
@@ -460,7 +467,7 @@ with col_right:
                 # ---------------- 图 3: Scour depth evolution ----------------
                 with plot_placeholders[2].container():
                     st.markdown("<div class='plot-container'><div style='text-align: center; font-family: \"Times New Roman\", serif; font-weight: bold; font-size: 17px; margin-bottom: 2px;'>Time-dependent scour depth</div>", unsafe_allow_html=True)
-                    fig3, ax3 = plt.subplots(figsize=(6, 3.5))
+                    fig3, ax3 = plt.subplots(figsize=(6, 3.5), dpi=300)
                     med_sd = np.median(scour_depths, axis=0)
                     p16_sd = np.percentile(scour_depths, 16, axis=0)
                     p84_sd = np.percentile(scour_depths, 84, axis=0)
@@ -486,7 +493,7 @@ with col_right:
                 # ---------------- 图 4: Time-dependent Failure Mode Probabilities ----------------
                 with plot_placeholders[3].container():
                     st.markdown("<div class='plot-container'><div style='text-align: center; font-family: \"Times New Roman\", serif; font-weight: bold; font-size: 17px; margin-bottom: 2px;'>Time-dependent failure mode probabilities</div>", unsafe_allow_html=True)
-                    fig4, ax4 = plt.subplots(figsize=(6, 3.5))
+                    fig4, ax4 = plt.subplots(figsize=(6, 3.5), dpi=300)
                     
                     color_map_prob = {'FFF': color_scour, 'PFF': color_line_s, 'PSF': color_line_l}
                     for name in label_names:
