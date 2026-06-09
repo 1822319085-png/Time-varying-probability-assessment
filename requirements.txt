@@ -1,6 +1,8 @@
-streamlit
-numpy<2.0.0
 joblib
-pandas
+matplotlib
+numpy<2.0.0
 openpyxl
+pandas
 scikit-learn
+scipy
+streamli
