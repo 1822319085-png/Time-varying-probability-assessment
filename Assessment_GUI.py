@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager as font_manager
 import io
 import os
+from pathlib import Path
 import joblib
 from scipy import stats, special
 from scipy.stats import qmc
@@ -63,21 +64,57 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ====== 全局可视化美化设置 ======
-font_path = 'times.ttf'  
-if os.path.exists(font_path):
-    font_manager.fontManager.addfont(font_path)
-    prop = font_manager.FontProperties(fname=font_path)
-    GLOBAL_FONT_NAME = prop.get_name()  
-    plt.rcParams['font.family'] = GLOBAL_FONT_NAME
-else:
-    GLOBAL_FONT_NAME = 'serif'
-    plt.rcParams['font.family'] = 'serif'
-    plt.rcParams['font.serif'] = ['Times New Roman']
+# 说明：Streamlit Cloud 是 Linux 环境，通常没有 Times New Roman。
+# st.markdown/CSS 只能控制网页文字，不能控制 st.pyplot 生成图片内部的字体。
+# 若要在云端 Matplotlib 图片中真正使用 Times New Roman，
+# 请把你有合法授权的字体文件放进 GitHub 仓库，例如：fonts/times.ttf 或 times.ttf。
+
+def setup_matplotlib_font():
+    """跨平台加载 Times New Roman，并返回 Matplotlib 可直接使用的 FontProperties。"""
+    candidate_files = [
+        Path(__file__).parent / "fonts" / "times.ttf",
+        Path(__file__).parent / "fonts" / "Times New Roman.ttf",
+        Path(__file__).parent / "fonts" / "times new roman.ttf",
+        Path(__file__).parent / "times.ttf",
+        Path(__file__).parent / "Times New Roman.ttf",
+    ]
+
+    for font_file in candidate_files:
+        if font_file.exists():
+            font_manager.fontManager.addfont(str(font_file))
+            prop = font_manager.FontProperties(fname=str(font_file))
+            font_name = prop.get_name()
+            plt.rcParams["font.family"] = font_name
+            plt.rcParams["font.serif"] = [font_name]
+            return font_name, prop
+
+    # 本地 Windows/macOS 可能已经安装 Times New Roman，先尝试系统字体。
+    available_font_names = {f.name for f in font_manager.fontManager.ttflist}
+    if "Times New Roman" in available_font_names:
+        prop = font_manager.FontProperties(family="Times New Roman")
+        plt.rcParams["font.family"] = "Times New Roman"
+        plt.rcParams["font.serif"] = ["Times New Roman"]
+        return "Times New Roman", prop
+
+    # 云端无 Times New Roman 且仓库未提供字体时，使用 Matplotlib 自带的近似衬线字体，保证不乱码。
+    # 注意：这不是 Times New Roman，只是兜底显示。
+    fallback = "STIXGeneral"
+    prop = font_manager.FontProperties(family=fallback)
+    plt.rcParams["font.family"] = fallback
+    plt.rcParams["font.serif"] = [fallback, "DejaVu Serif"]
+    return fallback, prop
+
+
+GLOBAL_FONT_NAME, GLOBAL_FONT_PROP = setup_matplotlib_font()
 
 plt.rcParams['mathtext.fontset'] = 'stix'
+plt.rcParams['axes.unicode_minus'] = False
 plt.rcParams['axes.grid'] = False
 plt.rcParams['grid.alpha'] = 0.4
 plt.rcParams['grid.linestyle'] = '--'
+plt.rcParams['pdf.fonttype'] = 42
+plt.rcParams['ps.fonttype'] = 42
+plt.rcParams['svg.fonttype'] = 'none'
 
 # 全局大标题
 st.markdown("<h1 style='text-align: center; color: #333; font-family: \"Times New Roman\", serif; font-weight: bold; margin-bottom: 0px;'>Lifecycle probabilistic seismic failure mode assessment of coastal bridge bents</h1>", unsafe_allow_html=True)
@@ -159,10 +196,33 @@ def find_all_crossovers(years, prob_a, prob_b, label_a, label_b):
     return crossovers
 
 def apply_academic_style(ax_obj):
+    """统一设置 Matplotlib 图内所有文字字体。
+    关键点：不能只改 rcParams，也要给当前 Axes 现有对象逐个指定 FontProperties。
+    """
+    ax_obj.xaxis.label.set_fontproperties(GLOBAL_FONT_PROP)
+    ax_obj.yaxis.label.set_fontproperties(GLOBAL_FONT_PROP)
+    ax_obj.title.set_fontproperties(GLOBAL_FONT_PROP)
+
+    ax_obj.xaxis.label.set_fontsize(12)
+    ax_obj.yaxis.label.set_fontsize(12)
+    ax_obj.title.set_fontsize(13)
+
     for label in (ax_obj.get_xticklabels() + ax_obj.get_yticklabels()):
-        label.set_fontname(GLOBAL_FONT_NAME)
+        label.set_fontproperties(GLOBAL_FONT_PROP)
         label.set_fontsize(11)
+
+    legend = ax_obj.get_legend()
+    if legend is not None:
+        for text in legend.get_texts():
+            text.set_fontproperties(GLOBAL_FONT_PROP)
+            text.set_fontsize(10)
+
     ax_obj.tick_params(axis='both', direction='in', top=True, right=True, labelsize=11, width=1.0, length=4.0)
+
+
+def set_axis_labels(ax_obj, xlabel, ylabel):
+    ax_obj.set_xlabel(xlabel, fontsize=12, fontproperties=GLOBAL_FONT_PROP)
+    ax_obj.set_ylabel(ylabel, fontsize=12, fontproperties=GLOBAL_FONT_PROP)
 
 # ================== 4. 核心界面布局 ==================
 col_left, spacer, col_right = st.columns([6.8, 0.2, 3.0])
@@ -498,8 +558,7 @@ with col_right:
                         x = np.linspace(0, 100, 1000)
                         ax1.plot(x, stats.lognorm.pdf(x, s, loc=0, scale=sc), color=color_line_l, lw=2.5, label='Longitudinal lognormal distribution')
 
-                    ax1.set_xlabel('Initial corrosion time (years)', fontsize=12)
-                    ax1.set_ylabel('Probability density', fontsize=12)
+                    set_axis_labels(ax1, 'Initial corrosion time (years)', 'Probability density')
                     ax1.set_xlim(0, 30)
                     
                     y_max1 = ax1.get_ylim()[1]
@@ -507,10 +566,10 @@ with col_right:
                     ax1.set_ylim(0, rounded_ymax1)
                     ax1.set_yticks(np.linspace(0, rounded_ymax1, 5))
                     
-                    ax1.legend(frameon=False, loc='upper right', prop={'family': GLOBAL_FONT_NAME, 'size': 10})
+                    ax1.legend(frameon=False, loc='upper right', prop=font_manager.FontProperties(fname=GLOBAL_FONT_PROP.get_file(), size=10) if GLOBAL_FONT_PROP.get_file() else font_manager.FontProperties(family=GLOBAL_FONT_NAME, size=10))
                     apply_academic_style(ax1)
                     plt.tight_layout(pad=0.3)
-                    st.pyplot(fig1)
+                    st.pyplot(fig1, clear_figure=True)
                     st.markdown("</div>", unsafe_allow_html=True)
 
                 # ---------------- 图 2: Time-dependent corrosion rate ----------------
@@ -526,8 +585,7 @@ with col_right:
                     ax2.plot(years_arr, med_l, color=color_line_l, lw=2.5, label='Longitudinal (median)', zorder=3)
                     ax2.fill_between(years_arr, p16_l, p84_l, color=color_hist_l, alpha=0.6, label='Longitudinal (16%-84% quantiles)', zorder=2)
                     
-                    ax2.set_xlabel('Service time (years)', fontsize=12)
-                    ax2.set_ylabel('Corrosion level', fontsize=12)
+                    set_axis_labels(ax2, 'Service time (years)', 'Corrosion level')
                     ax2.set_xlim(0, 100)
                     
                     max_corr = np.max([np.max(p84_l), np.max(p84_s)])
@@ -535,10 +593,10 @@ with col_right:
                     ax2.set_ylim(0, rounded_ymax2)
                     ax2.set_yticks(np.linspace(0, rounded_ymax2, 5))
                     
-                    ax2.legend(frameon=False, loc='upper left', prop={'family': GLOBAL_FONT_NAME, 'size': 10})
+                    ax2.legend(frameon=False, loc='upper left', prop=font_manager.FontProperties(fname=GLOBAL_FONT_PROP.get_file(), size=10) if GLOBAL_FONT_PROP.get_file() else font_manager.FontProperties(family=GLOBAL_FONT_NAME, size=10))
                     apply_academic_style(ax2)
                     plt.tight_layout(pad=0.3)
-                    st.pyplot(fig2)
+                    st.pyplot(fig2, clear_figure=True)
                     st.markdown("</div>", unsafe_allow_html=True)
 
                 # ---------------- 图 3: Scour depth evolution ----------------
@@ -554,8 +612,7 @@ with col_right:
                     ax3.plot(years_arr, med_sd, color=color_scour, lw=2.5, label='Scour depth (median)', zorder=3)
                     ax3.fill_between(years_arr, p16_sd, p84_sd, color='#B2DFDB', alpha=0.6, label='Scour depth (16%-84% quantiles)', zorder=2)
                     
-                    ax3.set_xlabel('Service time (years)', fontsize=12)
-                    ax3.set_ylabel('Scour depth (m)', fontsize=12)
+                    set_axis_labels(ax3, 'Service time (years)', 'Scour depth (m)')
                     ax3.set_xlim(0, 100)
                     
                     max_scour = np.max(p84_sd)
@@ -563,10 +620,10 @@ with col_right:
                     ax3.set_ylim(0, rounded_ymax3)
                     ax3.set_yticks(np.linspace(0, rounded_ymax3, 5))
                     
-                    ax3.legend(frameon=False, loc='upper left', prop={'family': GLOBAL_FONT_NAME, 'size': 10})
+                    ax3.legend(frameon=False, loc='upper left', prop=font_manager.FontProperties(fname=GLOBAL_FONT_PROP.get_file(), size=10) if GLOBAL_FONT_PROP.get_file() else font_manager.FontProperties(family=GLOBAL_FONT_NAME, size=10))
                     apply_academic_style(ax3)
                     plt.tight_layout(pad=0.3)
-                    st.pyplot(fig3)
+                    st.pyplot(fig3, clear_figure=True)
                     st.markdown("</div>", unsafe_allow_html=True)
 
                 # ---------------- 图 4: Time-dependent Failure Mode Probabilities ----------------
@@ -578,8 +635,7 @@ with col_right:
                     for name in label_names:
                         ax4.plot(years_arr, annual_probs[name], color=color_map_prob.get(name, '#333'), lw=2.5, label=name)
                     
-                    ax4.set_xlabel('Service time (years)', fontsize=12)
-                    ax4.set_ylabel('Probability', fontsize=12)
+                    set_axis_labels(ax4, 'Service time (years)', 'Probability')
                     ax4.set_xlim(0, 100)
                     
                     max_prob = np.max([np.max(annual_probs[name]) for name in label_names])
@@ -587,10 +643,10 @@ with col_right:
                     ax4.set_ylim(0, 1.0)
                     ax4.set_yticks(np.linspace(0, 1.0, 5))
                     
-                    ax4.legend(frameon=False, loc='upper right', prop={'family': GLOBAL_FONT_NAME, 'size': 10})
+                    ax4.legend(frameon=False, loc='upper right', prop=font_manager.FontProperties(fname=GLOBAL_FONT_PROP.get_file(), size=10) if GLOBAL_FONT_PROP.get_file() else font_manager.FontProperties(family=GLOBAL_FONT_NAME, size=10))
                     apply_academic_style(ax4)
                     plt.tight_layout(pad=0.3)
-                    st.pyplot(fig4)
+                    st.pyplot(fig4, clear_figure=True)
                     st.markdown("</div>", unsafe_allow_html=True)
 
                 # ---------------- 多交点全面计算输出 ----------------
