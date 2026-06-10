@@ -186,10 +186,15 @@ with col_left:
             with c3:
                 dist_val = st.selectbox(label=f"{p_id}_dist", options=dist_opts, index=dist_opts.index(p_dist), label_visibility="collapsed")
             with c4:
-                kwargs = {}
-                if p_min is not None: kwargs['min_value'] = float(p_min)
-                if p_max is not None: kwargs['max_value'] = float(p_max)
-                mean_val = st.number_input(label=f"{p_id}_mean", value=float(p_mean), step=float(p_step), format=p_fmt, label_visibility="collapsed", **kwargs)
+                # --- 修改点：判断如果 p_mean 为 None，则禁用该输入框 ---
+                if p_mean is None:
+                    mean_val = st.number_input(label=f"{p_id}_mean", value=0.0, format=p_fmt, disabled=True, label_visibility="collapsed")
+                else:
+                    kwargs = {}
+                    if p_min is not None: kwargs['min_value'] = float(p_min)
+                    if p_max is not None: kwargs['max_value'] = float(p_max)
+                    mean_val = st.number_input(label=f"{p_id}_mean", value=float(p_mean), step=float(p_step), format=p_fmt, label_visibility="collapsed", **kwargs)
+                # -----------------------------------------------------
             with c5:
                 disp_disabled = (dist_val == "Deterministic")
                 disp_val = st.number_input(label=f"{p_id}_disp", min_value=0.0, value=0.0 if disp_disabled else float(p_disp), step=0.05, format="%.3f", disabled=disp_disabled, label_visibility="collapsed")
