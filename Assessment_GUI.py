@@ -558,7 +558,7 @@ with col_right:
                         x = np.linspace(0, 100, 1000)
                         ax1.plot(x, stats.lognorm.pdf(x, s, loc=0, scale=sc), color=color_line_l, lw=2.5, label='Longitudinal lognormal distribution')
 
-                    set_axis_labels(ax1, 'Initial corrosion time (years)', 'Probability density')
+                    set_axis_labels(ax1, 'Initial corrosion time (years)', 'Probability density', fontsize=14)
                     ax1.set_xlim(0, 30)
                     
                     y_max1 = ax1.get_ylim()[1]
@@ -566,7 +566,7 @@ with col_right:
                     ax1.set_ylim(0, rounded_ymax1)
                     ax1.set_yticks(np.linspace(0, rounded_ymax1, 5))
                     
-                    ax1.legend(frameon=False, loc='upper right', prop=font_manager.FontProperties(fname=GLOBAL_FONT_PROP.get_file(), size=10) if GLOBAL_FONT_PROP.get_file() else font_manager.FontProperties(family=GLOBAL_FONT_NAME, size=10))
+                    ax1.legend(frameon=False, loc='upper right', prop=font_manager.FontProperties(fname=GLOBAL_FONT_PROP.get_file(), size=12) if GLOBAL_FONT_PROP.get_file() else font_manager.FontProperties(family=GLOBAL_FONT_NAME, size=12))
                     apply_academic_style(ax1)
                     plt.tight_layout(pad=0.3)
                     st.pyplot(fig1, clear_figure=True)
@@ -585,7 +585,7 @@ with col_right:
                     ax2.plot(years_arr, med_l, color=color_line_l, lw=2.5, label='Longitudinal (median)', zorder=3)
                     ax2.fill_between(years_arr, p16_l, p84_l, color=color_hist_l, alpha=0.6, label='Longitudinal (16%-84% quantiles)', zorder=2)
                     
-                    set_axis_labels(ax2, 'Service time (years)', 'Corrosion level')
+                    set_axis_labels(ax2, 'Service time (years)', 'Corrosion level', fontsize=14)
                     ax2.set_xlim(0, 100)
                     
                     max_corr = np.max([np.max(p84_l), np.max(p84_s)])
@@ -593,7 +593,7 @@ with col_right:
                     ax2.set_ylim(0, rounded_ymax2)
                     ax2.set_yticks(np.linspace(0, rounded_ymax2, 5))
                     
-                    ax2.legend(frameon=False, loc='upper left', prop=font_manager.FontProperties(fname=GLOBAL_FONT_PROP.get_file(), size=10) if GLOBAL_FONT_PROP.get_file() else font_manager.FontProperties(family=GLOBAL_FONT_NAME, size=10))
+                    ax2.legend(frameon=False, loc='upper left', prop=font_manager.FontProperties(fname=GLOBAL_FONT_PROP.get_file(), size=12) if GLOBAL_FONT_PROP.get_file() else font_manager.FontProperties(family=GLOBAL_FONT_NAME, size=12))
                     apply_academic_style(ax2)
                     plt.tight_layout(pad=0.3)
                     st.pyplot(fig2, clear_figure=True)
@@ -612,7 +612,7 @@ with col_right:
                     ax3.plot(years_arr, med_sd, color=color_scour, lw=2.5, label='Scour depth (median)', zorder=3)
                     ax3.fill_between(years_arr, p16_sd, p84_sd, color='#B2DFDB', alpha=0.6, label='Scour depth (16%-84% quantiles)', zorder=2)
                     
-                    set_axis_labels(ax3, 'Service time (years)', 'Scour depth (m)')
+                    set_axis_labels(ax3, 'Service time (years)', 'Scour depth (m)', fontsize=14)
                     ax3.set_xlim(0, 100)
                     
                     max_scour = np.max(p84_sd)
@@ -620,7 +620,7 @@ with col_right:
                     ax3.set_ylim(0, rounded_ymax3)
                     ax3.set_yticks(np.linspace(0, rounded_ymax3, 5))
                     
-                    ax3.legend(frameon=False, loc='upper left', prop=font_manager.FontProperties(fname=GLOBAL_FONT_PROP.get_file(), size=10) if GLOBAL_FONT_PROP.get_file() else font_manager.FontProperties(family=GLOBAL_FONT_NAME, size=10))
+                    ax3.legend(frameon=False, loc='upper left', prop=font_manager.FontProperties(fname=GLOBAL_FONT_PROP.get_file(), size=12) if GLOBAL_FONT_PROP.get_file() else font_manager.FontProperties(family=GLOBAL_FONT_NAME, size=12))
                     apply_academic_style(ax3)
                     plt.tight_layout(pad=0.3)
                     st.pyplot(fig3, clear_figure=True)
@@ -635,7 +635,7 @@ with col_right:
                     for name in label_names:
                         ax4.plot(years_arr, annual_probs[name], color=color_map_prob.get(name, '#333'), lw=2.5, label=name)
                     
-                    set_axis_labels(ax4, 'Service time (years)', 'Probability')
+                    set_axis_labels(ax4, 'Service time (years)', 'Probability', fontsize=14)
                     ax4.set_xlim(0, 100)
                     
                     max_prob = np.max([np.max(annual_probs[name]) for name in label_names])
@@ -643,7 +643,7 @@ with col_right:
                     ax4.set_ylim(0, 1.0)
                     ax4.set_yticks(np.linspace(0, 1.0, 5))
                     
-                    ax4.legend(frameon=False, loc='upper right', prop=font_manager.FontProperties(fname=GLOBAL_FONT_PROP.get_file(), size=10) if GLOBAL_FONT_PROP.get_file() else font_manager.FontProperties(family=GLOBAL_FONT_NAME, size=10))
+                    ax4.legend(frameon=False, loc='upper right', prop=font_manager.FontProperties(fname=GLOBAL_FONT_PROP.get_file(), size=12) if GLOBAL_FONT_PROP.get_file() else font_manager.FontProperties(family=GLOBAL_FONT_NAME, size=12))
                     apply_academic_style(ax4)
                     plt.tight_layout(pad=0.3)
                     st.pyplot(fig4, clear_figure=True)
