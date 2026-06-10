@@ -603,7 +603,7 @@ with col_right:
                     list_items = "".join([f"<li style='margin-bottom: 2px;'>{item['text']}</li>" for item in crossovers_found])
                     crossover_html = f"""
                     <div style='font-family: "Times New Roman", serif; font-size: 15px; color: #444; margin: 0px 0px 10px 20px;'>
-                        <b>Time to transition of failure modes (years):</b>
+                        <b>Time to transfer of seismic failure mode (years):</b>
                         <ul style='margin-top: 5px; padding-left: 20px;'>
                             {list_items}
                         </ul>
@@ -612,7 +612,7 @@ with col_right:
                 else:
                     crossover_html = """
                     <div style='font-family: "Times New Roman", serif; font-size: 15px; color: #444; margin: 0px 0px 10px 20px;'>
-                        <b>Time to transition of failure modes (years):</b> None
+                        <b>Time to transfer of seismic failure mode (years):</b> None
                     </div>
                     """
                 
