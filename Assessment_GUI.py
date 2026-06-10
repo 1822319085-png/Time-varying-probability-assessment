@@ -162,7 +162,7 @@ def apply_academic_style(ax_obj):
     for label in (ax_obj.get_xticklabels() + ax_obj.get_yticklabels()):
         label.set_fontname(GLOBAL_FONT_NAME)
         label.set_fontsize(11)
-    ax_obj.tick_params(axis='both', direction='in', top=True, right=True, labelsize=12, width=1.0, length=4.0)
+    ax_obj.tick_params(axis='both', direction='in', top=True, right=True, labelsize=11, width=1.0, length=4.0)
 
 # ================== 4. 核心界面布局 ==================
 col_left, spacer, col_right = st.columns([6.8, 0.2, 3.0])
@@ -186,7 +186,7 @@ with col_left:
             with c3:
                 dist_val = st.selectbox(label=f"{p_id}_dist", options=dist_opts, index=dist_opts.index(p_dist), label_visibility="collapsed")
             with c4:
-                # --- 修改点：判断如果 p_mean 为 None，则禁用该输入框 ---
+                # --- 判断如果 p_mean 为 None，则禁用该输入框 ---
                 if p_mean is None:
                     mean_val = st.number_input(label=f"{p_id}_mean", value=0.0, format=p_fmt, disabled=True, label_visibility="collapsed")
                 else:
@@ -201,7 +201,8 @@ with col_left:
             c6.markdown(f"<div style='text-align: center; color: #666; font-size: 15px; padding-top: 8px; font-family: \"Times New Roman\", serif;'>{rng_str}</div>", unsafe_allow_html=True)
             
             std_val = disp_val if use_std else (mean_val * disp_val)
-            user_vals.append({"id": p_id, "mean": mean_val, "std": std_val, "dist": dist_val, "min": p_min, "max": p_max})
+            # 新增 raw_disp 字段，无论 mean 是否为 0 都能记录原始界面输入的离散度数值
+            user_vals.append({"id": p_id, "mean": mean_val, "std": std_val, "raw_disp": disp_val, "dist": dist_val, "min": p_min, "max": p_max})
         
         st.write("")
         return user_vals
@@ -224,7 +225,7 @@ with col_left:
         ("rho_cs", "ρ<sub>column,s</sub>", "Pier transverse reinforcement ratio", "0.003~0.013", 0.003, 0.013, 0.008, "Normal", 0.42, 0.001, "%.3f", struct_opts),
         ("t", "t (m)", "Pier cover concrete thickness", "0.04~0.08", 0.04, 0.08, 0.06, "Normal", 0.20, 0.01, "%.2f", struct_opts),
         ("d_l", "d<sub>l</sub> (m)", "Pier longitudinal reinforcement diameter", "0.018~0.032", 0.018, 0.032, 0.025, "Normal", 0.10, 0.001, "%.3f", struct_opts),
-        ("fyt", "f<sub>yt</sub> (MPa)", "Transverse reinforcement yield strength", "250~450", 250.0, 450.0, 300.0, "Lognormal", 0.106, 10.0, "%.0f", struct_opts),
+        ("fyt", "f<sub>yt</sub> (MPa)", "Transverse reinforcement yield strength", "250~450", 250.0, 450.0, 350.0, "Lognormal", 0.106, 10.0, "%.0f", struct_opts),
         ("d_t", "d<sub>s</sub> (m)", "Transverse reinforcement diameter", "0.01~0.02", 0.01, 0.02, 0.016, "Normal", 0.10, 0.001, "%.3f", struct_opts)
     ]
     user_struct = render_param_section("1. Structure/Soil-related parameters", part1_config, use_std=False)
@@ -234,11 +235,12 @@ with col_left:
     
     st.markdown("<div class='section-header'>2. Corrosion-related parameters</div>", unsafe_allow_html=True)
     
-    st.markdown("<div style='margin-top: 15px; margin-bottom: 5px;'>", unsafe_allow_html=True)
-    col_f1, col_f2 = st.columns([1.5, 1])
+    st.markdown("<div style='margin-top: 13px; margin-bottom: 5px;'>", unsafe_allow_html=True)
+    col_f1, col_f2 = st.columns([1.4, 1.1])
     with col_f1:
         st.latex(r"t_{corr} = X_1 \left[ \frac{d_c^2}{4k_ek_tk_cD_0(t_0)^n} \left[ \text{erf}^{-1} \left( 1 - \frac{C_{cr}}{C_0} \right) \right]^{-2} \right]^{\frac{1}{1-n}}")
     with col_f2:
+        st.markdown("<div style='margin-top:20px'></div>", unsafe_allow_html=True)
         st.latex(r"C_0 = A_{cs}(w/c) + \varepsilon_{cs}")
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -280,7 +282,8 @@ with col_left:
         ("r_val", "r", "Empirical scour parameter r", "-", None, None, 0.269, "Deterministic", 0.0, 0.01, "%.3f", scour_opts),
         ("s_val", "s", "Empirical scour parameter s", "-", None, None, 2.135, "Deterministic", 0.0, 0.01, "%.3f", scour_opts)
     ]
-    user_scour = render_param_section("3. Scour-related parameters", part3_config, use_std=True)
+    # 将 use_std=False 传入，强制第三部分表头显示为 COV
+    user_scour = render_param_section("3. Scour-related parameters", part3_config, use_std=False)
 
 # ----------------- 右侧：控制与图表区 -----------------
 with col_right:
@@ -394,7 +397,9 @@ with col_right:
                 U_SD = U[:, sd_idx]  # 获取独立生成的 LHS 均匀抽样矩阵 (用于保证 SD_val 自身的抽样正交性)
                 
                 sd_input = next(p for p in all_inputs if p['id'] == 'SD_val')
-                sd_std_val = sd_input['std']  # 界面传入的 0.27 (核心：把它当作 COV 变异系数)
+                # 直接提取界面输入的原始值(0.27)作为 COV，避免因 mean 禁用(值为 0)导致 std 被清零
+                sd_std_val = sd_input['raw_disp']  
+                
                 sd_min = 0.0 if sd_input['min'] is None else sd_input['min']
                 sd_max = 8.0 if sd_input['max'] is None else sd_input['max']
                 sd_dist_type = sd_input['dist']
