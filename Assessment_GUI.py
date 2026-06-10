@@ -274,11 +274,11 @@ with col_left:
     scour_opts = ["Normal", "Lognormal", "Uniform", "Deterministic"]
     part3_config = [
         ("SD_val", "SD (m)", "SD<sub>mean</sub> / B = p[1 - exp(-qt)] + r[1 - exp(-st)]", "0~8", 0.0, 8.0, None, "Normal", 0.27, 0.5, "%.3f", scour_opts),
-        ("B_val", "B (m)", "Base width of the pile foundation", "-", None, None, 2.260, "Normal", 0.226, 0.1, "%.3f", scour_opts),
-        ("p_val", "p", "Empirical scour parameter p", "-", None, None, 1.093, "Deterministic", 0.0, 0.1, "%.3f", scour_opts),
+        ("B_val", "B (m)", "Base width of the pile foundation", "-", None, None, 2.260, "Deterministic", 0.0, 0.01, "%.3f", scour_opts),
+        ("p_val", "p", "Empirical scour parameter p", "-", None, None, 1.093, "Deterministic", 0.0, 0.01, "%.3f", scour_opts),
         ("q_val", "q", "Empirical scour parameter q", "-", None, None, 0.021, "Deterministic", 0.0, 0.01, "%.3f", scour_opts),
-        ("r_val", "r", "Empirical scour parameter r", "-", None, None, 0.269, "Deterministic", 0.0, 0.1, "%.3f", scour_opts),
-        ("s_val", "s", "Empirical scour parameter s", "-", None, None, 2.135, "Deterministic", 0.0, 0.1, "%.3f", scour_opts)
+        ("r_val", "r", "Empirical scour parameter r", "-", None, None, 0.269, "Deterministic", 0.0, 0.01, "%.3f", scour_opts),
+        ("s_val", "s", "Empirical scour parameter s", "-", None, None, 2.135, "Deterministic", 0.0, 0.01, "%.3f", scour_opts)
     ]
     user_scour = render_param_section("3. Scour-related parameters", part3_config, use_std=True)
 
