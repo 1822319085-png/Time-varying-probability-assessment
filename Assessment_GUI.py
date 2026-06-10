@@ -222,12 +222,12 @@ with col_left:
         ("fyt", "f<sub>yt</sub> (MPa)", "Transverse reinforcement yield strength", "250~450", 250.0, 450.0, 300.0, "Lognormal", 0.106, 10.0, "%.0f", struct_opts),
         ("d_t", "d<sub>s</sub> (m)", "Transverse reinforcement diameter", "0.01~0.02", 0.01, 0.02, 0.016, "Normal", 0.10, 0.001, "%.3f", struct_opts)
     ]
-    user_struct = render_param_section("1. Structural related parameters", part1_config, use_std=False)
+    user_struct = render_param_section("1. Structure/Soil-related parameters", part1_config, use_std=False)
 
     # ---------------- 2. 锈蚀参数 ----------------
     corr_opts = ["Normal", "Lognormal", "Beta", "Gumbel", "Uniform", "Deterministic"]
     
-    st.markdown("<div class='section-header'>2. Corrosion related parameters</div>", unsafe_allow_html=True)
+    st.markdown("<div class='section-header'>2. Corrosion-related parameters</div>", unsafe_allow_html=True)
     
     st.markdown("<div style='margin-top: 15px; margin-bottom: 5px;'>", unsafe_allow_html=True)
     col_f1, col_f2 = st.columns([1.5, 1])
@@ -268,14 +268,14 @@ with col_left:
     # ---------------- 3. 冲刷参数 ----------------
     scour_opts = ["Normal", "Lognormal", "Uniform", "Deterministic"]
     part3_config = [
-        ("SD_val", "SD (m)", "SD<sub>mean</sub> / B = p[1 - exp(-qt)] + r[1 - exp(-st)]", "0~8", 0.0, 8.0, 4.0, "Normal", 0.27, 0.5, "%.3f", scour_opts),
+        ("SD_val", "SD (m)", "SD<sub>mean</sub> / B = p[1 - exp(-qt)] + r[1 - exp(-st)]", "0~8", 0.0, 8.0, None, "Normal", 0.27, 0.5, "%.3f", scour_opts),
         ("B_val", "B (m)", "Base width of the pile foundation", "-", None, None, 2.260, "Normal", 0.226, 0.1, "%.3f", scour_opts),
         ("p_val", "p", "Empirical scour parameter p", "-", None, None, 1.093, "Deterministic", 0.0, 0.1, "%.3f", scour_opts),
         ("q_val", "q", "Empirical scour parameter q", "-", None, None, 0.021, "Deterministic", 0.0, 0.01, "%.3f", scour_opts),
         ("r_val", "r", "Empirical scour parameter r", "-", None, None, 0.269, "Deterministic", 0.0, 0.1, "%.3f", scour_opts),
         ("s_val", "s", "Empirical scour parameter s", "-", None, None, 2.135, "Deterministic", 0.0, 0.1, "%.3f", scour_opts)
     ]
-    user_scour = render_param_section("3. Scour related parameters", part3_config, use_std=True)
+    user_scour = render_param_section("3. Scour-related parameters", part3_config, use_std=True)
 
 # ----------------- 右侧：控制与图表区 -----------------
 with col_right:
